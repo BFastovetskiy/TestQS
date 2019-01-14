@@ -62,10 +62,20 @@ namespace TestQS
         /// <returns>Resulting QSTask collection</returns>
         public List<QSTask> Compare(List<QSTask> historyTasks, List<QSTask> currentTasks)
         {
-            List<QSTask> result = null;
+            List<QSTask> result = new List<QSTask>();
             this.m_logger.WriteLog("Compare history and current iterations");
             if (historyTasks.Count != 0)
-                result = currentTasks.Except<QSTask>(currentTasks).ToList().Where(t => t.Status == "Failed" && t.Enable == "Yes").ToList();            
+            {
+                currentTasks = currentTasks.Where(t => t.Status == "Failed" && t.Enable == "Yes").ToList();
+                foreach (var task in currentTasks)
+                {
+                    var q = historyTasks.Single(t => t.Id == task.Id);
+                    if (q == null)
+                        result.Add(task);
+                    else if (q.LastExecution != task.LastExecution)
+                        result.Add(task);
+                }
+            }
             else
                 result = currentTasks.Where(t => t.Status == "Failed" && t.Enable == "Yes").ToList();
             this.m_logger.WriteLog(string.Format("Found {0} of failed tasks", result.Count));
